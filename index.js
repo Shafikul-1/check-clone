@@ -42,12 +42,23 @@ async function fbDetails(usernames) {
     } finally {
         await browser.close();
     }
-    // console.log(dataAll);
-     // Write data to file
-     const fileName = 'output.json';
-     fs.writeFileSync(fileName, JSON.stringify(dataAll, null, 2));
-     console.log(`Data has been written to ${fileName}`);
+    // Read existing data from file
+    let existingData = [];
+    const fileName = 'output.json';
+    try {
+        if (fs.existsSync(fileName)) {
+            existingData = JSON.parse(fs.readFileSync(fileName));
+        }
+    } catch (err) {
+        console.error("Error reading existing data:", err);
+    }
+
+    // Merge existing data with new data
+    const mergedData = existingData.concat(dataAll);
+
+    // Write merged data back to file
+    fs.writeFileSync(fileName, JSON.stringify(mergedData, null, 2));
+    console.log(`Data has been merged and written to ${fileName}`);
 }
 
-fbDetails(['weddingsbymichellelouise', 'knobcreekmeadowsvenue', 'softechphotography', 'carlagatesphotography', 'sweetdreamsphotographyuk', 'elainebolesphotography', 'christopherlewisphotography','helenesimpsonphotography','sweetdreamsphotographyuk','boglarkabirophoto','Capturedbyemma','elainebolesphotography','christopherlewisphotography','Julesfortunephotography','weddingsbymichellelouise','Theliverpoolweddingphotographer','JeffLandPhotography','damianburcherphotographer','SMHPhotography.Cheshire','ohdeerportraits','pryor1966','KimCravenPhotography','1919photography','AmandaLeePhotographsbyALMcBride','carlagatesphotography','profile.php?id=100089832105364','HeatherKayePhotograhy','photographybykaseyduvall'
-]); // Pass an array of usernames
+fbDetails(['weddingsbymichellelouise', 'knobcreekmeadowsvenue']); // Pass an array of usernames
