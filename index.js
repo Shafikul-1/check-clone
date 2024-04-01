@@ -3,7 +3,7 @@ import fs from 'fs';
 const dataAll = [];
 
 async function fbDetails(usernames) {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch();
     try {
         for (const username of usernames) {
             const page = await browser.newPage();
