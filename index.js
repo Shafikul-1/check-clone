@@ -1,67 +1,53 @@
 import puppeteer from 'puppeteer';
+import fs from 'fs';
+const dataAll = [];
 
-async function fbDetails(username) {
-    let url = '';
-    if (typeof username === "number") {
-         url = `https://www.facebook.com/profile.php?id=${username}`;
-    } else if (typeof username === "string") {
-         url = `https://www.facebook.com/${username}`;  
-    } else {
-         console.error("Invalid username type.");
-         return;
-    }
-
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
+async function fbDetails(usernames) {
+    const browser = await puppeteer.launch({headless: false});
     try {
-        await page.goto(url);
-       // Wait until the element specified by the XPath expression is found
-       await page.waitForFunction(() => {
-        return document.evaluate("/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[1]/div/div[2]/div/div/div/div[2]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue !== null;
-    });
+        for (const username of usernames) {
+            const page = await browser.newPage();
+            let url = '';
+            if (typeof username === "number") {
+                url = `https://www.facebook.com/profile.php?id=${username}`;
+            } else if (typeof username === "string") {
+                url = `https://www.facebook.com/${username}`;
+            } else {
+                console.error("Invalid username type.");
+                continue; // Move to the next iteration
+            }
 
-    // Now, locate the element using the XPath expression
-    const pageCategory = await page.evaluate(() => {
-        const element = document.evaluate("/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div[2]/div/div[1]/div[2]/div/div[1]/div/div/div/div/div[2]/div[2]/div/ul/div[1]/div[2]/div/div/div/span/div/span", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        return element ? element.textContent.trim() : "pageCategory Element not found";
-    });
-    const countryName = await page.evaluate(() => {
-        const element = document.evaluate("/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div[2]/div/div[1]/div[2]/div/div[1]/div/div/div/div/div[2]/div[2]/div/ul/div[2]/div[2]/div/span", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        return element ? element.textContent.trim() : "countryName Element not found";
-    });
-    const phoneNumber = await page.evaluate(() => {
-        const element = document.evaluate("/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div[2]/div/div[1]/div[2]/div/div[1]/div/div/div/div/div[2]/div[2]/div/ul/div[3]/div[2]/div/div/span", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        return element ? element.textContent.trim() : "phoneNumber Element not found";
-    });
-    const pageEmail = await page.evaluate(() => {
-        const element = document.evaluate("/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div[2]/div/div[1]/div[2]/div/div[1]/div/div/div/div/div[2]/div[2]/div/ul/div[4]/div[2]/div/div/span", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        return element ? element.textContent.trim() : "pageEmail Element not found";
-    });
-    const website = await page.evaluate(() => {
-        const element = document.evaluate("/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div[2]/div/div[1]/div[2]/div/div[1]/div/div/div/div/div[2]/div[2]/div/ul/div[6]/div[2]/div/a/div/div/span", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        return element ? element.textContent.trim() : "website Element not found";
-    });
-    const otherSocialAcc = await page.evaluate(() => {
-        const element = document.evaluate("/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div[2]/div/div[1]/div[2]/div/div[1]/div/div/div/div/div[2]/div[2]/div/ul/div[5]/div[2]/div/div/span/a", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        return element ? element.textContent.trim() : "otherSocialAcc Element not found";
-    });
+            await page.goto(url);
+            await page.waitForFunction(() => {
+                return document.evaluate("/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[1]/div/div[2]/div/div/div/div[2]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue !== null;
+            });
 
-    const officeOpenOrClose = await page.evaluate(() => {
-        const element = document.evaluate("/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div[2]/div/div[1]/div[2]/div/div[1]/div/div/div/div/div[2]/div[2]/div/ul/div[7]/div[2]/div/div/span[1]", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        return element ? element.textContent.trim() : "officeOpenOrClose Element not found";
-    });
-    const rating = await page.evaluate(() => {
-        const element = document.evaluate("/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div[2]/div/div[1]/div[2]/div/div[1]/div/div/div/div/div[2]/div[2]/div/ul/div[8]/div[2]/a/div/div/span", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-        return element ? element.textContent.trim() : "rating Element not found";
-    });
-        console.log(pageCategory, countryName, phoneNumber, pageEmail, website, otherSocialAcc);
+            const result = await page.evaluate(() => {
+                const mainPath = "/html/body/div[1]/div/div[1]/div/div[3]/div/div/div[1]/div[1]/div/div/div[4]/div[2]/div/div[1]/div[2]/div/div[1]/div/div/div/div/div[2]/div[2]/div/ul/";
+                const elements = document.evaluate(`${mainPath}div`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+                const data = {};
+                for (let i = 0; i < elements.snapshotLength; i++) {
+                    const element = elements.snapshotItem(i);
+                    data[i] = element ? element.textContent.trim() : "Element not found";
+                }
+                data.url = window.location.href;
+                return data;
+            });
+            dataAll.push(result);
 
+            await page.close();
+        }
     } catch (error) {
         console.error("Error occurred:", error);
     } finally {
         await browser.close();
     }
+    // console.log(dataAll);
+     // Write data to file
+     const fileName = 'output.json';
+     fs.writeFileSync(fileName, JSON.stringify(dataAll, null, 2));
+     console.log(`Data has been written to ${fileName}`);
 }
 
-// Call the function in an async context or use await
-fbDetails('wpbangladesh');
+fbDetails(['weddingsbymichellelouise', 'knobcreekmeadowsvenue', 'softechphotography', 'carlagatesphotography', 'sweetdreamsphotographyuk', 'elainebolesphotography', 'christopherlewisphotography','helenesimpsonphotography','sweetdreamsphotographyuk','boglarkabirophoto','Capturedbyemma','elainebolesphotography','christopherlewisphotography','Julesfortunephotography','weddingsbymichellelouise','Theliverpoolweddingphotographer','JeffLandPhotography','damianburcherphotographer','SMHPhotography.Cheshire','ohdeerportraits','pryor1966','KimCravenPhotography','1919photography','AmandaLeePhotographsbyALMcBride','carlagatesphotography','profile.php?id=100089832105364','HeatherKayePhotograhy','photographybykaseyduvall'
+]); // Pass an array of usernames
